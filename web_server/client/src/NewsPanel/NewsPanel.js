@@ -2,6 +2,7 @@ import './NewsPanel.css';
 import React from 'react';
 import NewsCard from '../NewsCard/NewsCard';
 import _ from 'lodash';
+import Auth from '../Auth/Auth';
 
 class NewsPanel extends React.Component {
 	constructor() {
@@ -28,6 +29,9 @@ class NewsPanel extends React.Component {
 		let request = new Request('http://localhost:3000/news', {
 			method:'GET',
 			// cache: false
+			headers: {
+				'Authorization': 'bearer ' + Auth.getToken(),
+			}
 		});
 
 		fetch(request)
