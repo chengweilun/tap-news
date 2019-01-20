@@ -7,7 +7,7 @@ import Auth from '../Auth/Auth';
 class NewsPanel extends React.Component {
 	constructor() {
 		super();
-		this.state = {news:null};
+		this.state = {news:null, pageNum:1, totalPages:1, loadAll:false};
 		this.handleScroll= this.handleScroll.bind(this);
 	}
 
@@ -25,20 +25,28 @@ class NewsPanel extends React.Component {
 		}
 	}
 
-	loadMoreNews(e) {
-		let request = new Request('http://localhost:3000/news', {
+	loadMoreNews() {
+		if (this.state.loadAll ===true) {
+			return ;
+		}
+
+		let url = 'http://localhost:3000/news/userId/' + Auth.getEmail() + '/pageNum/'+this.state.pageNum;
+		let request = new Request(encodeURI(url), {
 			method:'GET',
 			// cache: false
 			headers: {
 				'Authorization': 'bearer ' + Auth.getToken(),
-			}
-		});
+			}});
 
 		fetch(request)
-			.then((res) => res.json())
-			.then((news) => {
+			.then(res => res.json())
+			.then(news => {
+				if (!news || news.length == 0) {
+					this.setState({loadAll:true})
+				}
 				this.setState({
 					news: this.state.news?this.state.news.concat(news):news,
+					pageNum: this.state.pageNum + 1
 				})
 			});
 	}
@@ -51,7 +59,7 @@ class NewsPanel extends React.Component {
                 </a>
             );
         });
-        
+
         return (
             <div className='container-fluid'>
                 <div className='list-group'>{news_list}</div>

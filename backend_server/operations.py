@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import sys
@@ -9,23 +10,18 @@ import redis
 # import common package in parent directory
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common'))
 import mongodb_client # pylint: disable=import-error, wrong-import-position
-import news_recommendation_service_client
-from cloudAMQP_client import CloudAMQPClient # pylint: disable=import-error, wrong-import-position
+# import news_recommendation_service_client
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
-NEWS_TABLE_NAME = "news"
+NEWS_TABLE_NAME = "news-test"
 
 NEWS_LIST_BATCH_SIZE = 10
 NEWS_LIMIT = 100
-
 USER_NEWS_TIME_OUT_IN_SECONDS = 60
-LOG_CLICKS_TASK_QUEUE_URL = 'amqp://inrzmluv:orVtIggEw3ANTJ8O90Fjhyyq0ZXUjRdz@termite.rmq.cloudamqp.com/inrzmluv'
-LOG_CLICKS_TASK_QUEUE_NAME = 'preference'
 
 redis_client = redis.StrictRedis(REDIS_HOST, REDIS_PORT, db=0)
-cloudAMQP_client = cloudAMQPClient(LOG_CLICKS_TASK_QUEUE_URL, LOG_CLICKS_TASK_QUEUE_NAME)
 
 def getOneNews():
     db = mongodb_client.get_db()
@@ -51,25 +47,27 @@ def getNewsSummariesForUser(user_id, page_num):
     else:
         db = mongodb_client.get_db()
         total_news = list(db[NEWS_TABLE_NAME].find().sort([('publishedAt', -1)]).limit(NEWS_LIMIT))
+        # total_news = list(db[NEWS_TABLE_NAME])
         total_news_digests = map(lambda x:x['digest'], total_news)
 
         redis_client.set(user_id, pickle.dumps(total_news_digests))
         redis_client.expire(user_id, USER_NEWS_TIME_OUT_IN_SECONDS)
 
         sliced_news = total_news[begin_index: end_index]
+        print sliced_news
 
      # Get preference for the user
-    preference = news_recommendation_service_client.getPreferenceForUser(user_id)
-    topPreference = None
-
-    if preference is not None and len(preference) > 0:
-        topPreference = preference[0]
+    # preference = news_recommendation_service_client.getPreferenceForUser(user_id)
+    # topPreference = None
+    #
+    # if preference is not None and len(preference) > 0:
+    #     topPreference = preference[0]
 
     for news in sliced_news:
         # Remove text field to save bandwidth.
         del news['text']
-        if news['class'] == topPreference:
-            news['reason'] = 'Recommend'
+        # if news['class'] == topPreference:
+        #     news['reason'] = 'Recommend'
         if news['publishedAt'].date() == datetime.today().date():
             news['time'] = 'today'
     return json.loads(dumps(sliced_news))

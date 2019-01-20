@@ -1,11 +1,12 @@
-import json
-import pyjsonrpc
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common'))
+
+import json
+import pyjsonrpc
 from bson.json_util import dumps
 import mongodb_client
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common'))
+import operations
 
 
 SERVER_HOST = 'localhost'
@@ -14,16 +15,15 @@ SERVER_PORT = 4040
 
 class RequestHandler(pyjsonrpc.HttpRequestHandler):
     """Test Method"""
-    @pyjsonrpc.rpcmethod
-    def add(self, a, b):
-        print "add is called with %d and %d" %(a,b)
-        return a+b
+    # @pyjsonrpc.rpcmethod
+    # def add(self, a, b):
+    #     print "add is called with %d and %d" %(a,b)
+    #     return a+b
 
     @pyjsonrpc.rpcmethod
-    def getNews(self):
-        db = mongodb_client.get_db('test')
-        news = list(db['news'].find())
-        return json.loads(dumps(news))
+    def getNewsSummariesForUser(self, user_id, page_num):
+        print "call function in service.py"
+        return operations.getNewsSummariesForUser(user_id, page_num)
 
 
 http_server = pyjsonrpc.ThreadingHttpServer(
