@@ -12,10 +12,18 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common'))
 import mongodb_client # pylint: disable=import-error, wrong-import-position
 # import news_recommendation_service_client
 
+from cloudAMQP_client import cloudAMQPClient
+
+CLOUDAMQP_URL = "amqp://avqwoxul:DnLJdgb71xYI_2bNIC5myl9-6NF-Hsop@hornet.rmq.cloudamqp.com/avqwoxul"
+
+TEST_QUEUE_NAME = 'test'
+
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
-NEWS_TABLE_NAME = "news-test"
+CLICK_LOGS_TABLE_NAME = "user_click_log"
+
+NEWS_TABLE_NAME = "news"
 
 NEWS_LIST_BATCH_SIZE = 10
 NEWS_LIMIT = 100
@@ -23,6 +31,7 @@ USER_NEWS_TIME_OUT_IN_SECONDS = 60
 
 redis_client = redis.StrictRedis(REDIS_HOST, REDIS_PORT, db=0)
 
+amqp_client = cloudAMQPClient(CLOUDAMQP_URL, TEST_QUEUE_NAME)
 def getOneNews():
     db = mongodb_client.get_db()
     news = db[NEWS_TABLE_NAME].find_one()
@@ -74,5 +83,9 @@ def getNewsSummariesForUser(user_id, page_num):
 
 def logNewsClickForUser(user_id, news_id):
     # Send log task to machine learning service for prediction
+    message = {'userId': user_id, 'newsId': news_id, 'timestamp': datetime.utcnow()}
+    db = mongodb_client.get_db()
+    db[CLICK_LOGS_TABLE_NAME].insert(message)
+
     message = {'userId': user_id, 'newsId': news_id, 'timestamp': str(datetime.utcnow())}
-    cloudAMQP_client.sendMessage(message)
+    amqp_client.sendMessage(message)

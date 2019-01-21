@@ -7,3 +7,5 @@ var client = require('./rpc_client');
 client.getNewsSummariesForUser('test',1,function(response) {
   console.assert(response!=null);
 });
+
+client.logNewsClickForUser('test','test');

@@ -25,6 +25,13 @@ class RequestHandler(pyjsonrpc.HttpRequestHandler):
         print "call function in service.py"
         return operations.getNewsSummariesForUser(user_id, page_num)
 
+    @pyjsonrpc.rpcmethod
+    def logNewClickForUser(user_id, news_id):
+    """logNewsClickForUser"""
+    print("log_news_click_for_user is called with %s and %s" % (user_id, news_id))
+    operations.logNewsClickForUser(user_id, news_id)
+
+
 
 http_server = pyjsonrpc.ThreadingHttpServer(
     server_address=(SERVER_HOST, SERVER_PORT),
